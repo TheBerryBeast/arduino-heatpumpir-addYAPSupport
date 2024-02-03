@@ -262,7 +262,7 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
 
     if(tempDifference % 2 == 0 && (temperature < 69 || temperature >= 79)) {
       GreeTemplate[3] = 0x58; 
-    } else if(tempDifference % 2 != 0 && (temperature >= 69 && temperature < 79)) {
+    } else if(tempDifference % 2 != 0 && (temperature >= 69 && temperature < 79 || temperature == 61)) {
       GreeTemplate[3] = 0x58; 
     } 
 
@@ -278,10 +278,12 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
     while (tempDifference >= tempIncrement && tempDifference > 1) {
         tempDifference -= tempIncrement;
         GreeTemplate[1] += 0x1; 
-        
+
+       /*
         if (GreeTemplate[3] == 0xA) {
             tempDifference -= 1;
         }
+*/ 
     }
   } else {
     if (temperature > 15 && temperature < 31)
@@ -419,7 +421,35 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
   IR.space(GREE_AIRCON1_MSG_SPACE);
 
   // Payload part #2
-  for (i=4; i<=15; i++) {
+  for (i=4; i<=7; i++) {
+    IR.sendIRbyte(GreeTemplate[i], GREE_AIRCON1_BIT_MARK, GREE_AIRCON1_ZERO_SPACE, GREE_AIRCON1_ONE_SPACE);
+	}
+
+  // Message space
+  IR.mark(GREE_AIRCON1_BIT_MARK);
+  IR.space(GREE_AIRCON1_MSG_SPACE);
+
+  // Send Header mark
+  IR.mark(GREE_AIRCON1_HDR_MARK);
+  IR.space(GREE_AIRCON1_HDR_SPACE);
+
+  // Payload part #3
+  for (i=8; i<=11; i++) {
+    IR.sendIRbyte(GreeTemplate[i], GREE_AIRCON1_BIT_MARK, GREE_AIRCON1_ZERO_SPACE, GREE_AIRCON1_ONE_SPACE);
+	}
+
+  IR.mark(GREE_AIRCON1_BIT_MARK);
+  IR.space(GREE_AIRCON1_ZERO_SPACE);
+  IR.mark(GREE_AIRCON1_BIT_MARK);
+  IR.space(GREE_AIRCON1_ONE_SPACE);
+  IR.mark(GREE_AIRCON1_BIT_MARK);
+  IR.space(GREE_AIRCON1_ZERO_SPACE);
+
+  // Message space
+  IR.mark(GREE_AIRCON1_BIT_MARK);
+  IR.space(GREE_AIRCON1_MSG_SPACE);
+
+  for (i=12; i<=15; i++) {
     IR.sendIRbyte(GreeTemplate[i], GREE_AIRCON1_BIT_MARK, GREE_AIRCON1_ZERO_SPACE, GREE_AIRCON1_ONE_SPACE);
 	}
 
