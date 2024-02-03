@@ -58,6 +58,17 @@ GreeYTHeatpumpIR::GreeYTHeatpumpIR() : GreeiFeelHeatpumpIR()
   greeModel = GREE_YT;
 }
 
+// Support for YAP1F remote
+GreeYAPHeatpumpIR::GreeYAPHeatpumpIR() : GreeiFeelHeatpumpIR()
+{
+  static const char model[] PROGMEM = "greeyap";
+  static const char info[]  PROGMEM = "{\"mdl\":\"greeyap\",\"dn\":\"Gree YAP\",\"mT\":16,\"xT\":30,\"fs\":3}";
+
+  _model = model;
+  _info = info;
+  greeModel = GREE_YAP;
+}
+
 void GreeHeatpumpIR::send(IRSender& IR, uint8_t powerModeCmd, uint8_t operatingModeCmd, uint8_t fanSpeedCmd, uint8_t temperatureCmd, uint8_t swingVCmd, uint8_t swingHCmd)
 {
   send(IR, powerModeCmd, operatingModeCmd, fanSpeedCmd, temperatureCmd, swingVCmd, swingHCmd, false);
@@ -78,7 +89,6 @@ void GreeHeatpumpIR::send(IRSender& IR, uint8_t powerModeCmd, uint8_t operatingM
   uint8_t powerMode = GREE_AIRCON1_POWER_ON;
   uint8_t operatingMode = GREE_AIRCON1_MODE_HEAT;
   uint8_t fanSpeed = GREE_AIRCON1_FAN_AUTO;
-  uint8_t temperature = 21;
   uint8_t swingV = GREE_VDIR_AUTO;
   uint8_t swingH = GREE_HDIR_AUTO;
 
@@ -154,7 +164,7 @@ void GreeHeatpumpIR::send(IRSender& IR, uint8_t powerModeCmd, uint8_t operatingM
     }
   }
 
-  if (greeModel == GREE_YAA || greeModel == GREE_YAC || greeModel == GREE_YT)
+  if (greeModel == GREE_YAA || greeModel == GREE_YAC || greeModel == GREE_YT || greeModel == GREE_YAP)
   {
     switch (swingVCmd)
     {
@@ -181,11 +191,14 @@ void GreeHeatpumpIR::send(IRSender& IR, uint8_t powerModeCmd, uint8_t operatingM
         break;
     }
 
-    if (greeModel == GREE_YAC)
+    if (greeModel == GREE_YAC || greeModel == GREE_YAP)
     {
       switch (swingHCmd)
       {
         case HDIR_AUTO:
+          if(greeModel == GREE_YAP) {
+            break;
+          } 
         case HDIR_SWING:
           swingH = GREE_HDIR_SWING;
           break;
@@ -206,15 +219,12 @@ void GreeHeatpumpIR::send(IRSender& IR, uint8_t powerModeCmd, uint8_t operatingM
           break;
       }
     }
+
   }
 
+  
 
-  if (temperatureCmd > 15 && temperatureCmd < 31)
-  {
-    temperature = temperatureCmd - 16;
-  }
-
-  sendGree(IR, powerMode, operatingMode, fanSpeed, temperature, swingV, swingH, turboMode, iFeelMode);
+  sendGree(IR, powerMode, operatingMode, fanSpeed, temperatureCmd, swingV, swingH, turboMode, iFeelMode);
 }
 
 // Send the Gree code
@@ -222,8 +232,9 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
 {
   (void)swingH;
 
-  uint8_t GreeTemplate[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-  //                            0     1     2     3     4     5     6     7
+  // 8 - 15 needed for YAP 
+  uint8_t GreeTemplate[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  //                            0     1     2     3     4     5     6     7     8     9    10    11     12    13    14   15
 
   uint8_t i;
 
@@ -234,7 +245,59 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
   // Set the Fan speed, operating mode and power state
   GreeTemplate[0] = fanSpeed | operatingMode | powerMode;
   // Set the temperature
-  GreeTemplate[1] = temperature;
+
+  // YAP1F uses different bytes to display fahrenheit temperatures
+  // Probably some bit manipulation here but could not figure out the pattern
+  if(greeModel == GREE_YAP && (temperature >= 61 && temperature <= 86)) {
+    int baseTemp = 60; // Starting from base temperature
+    int tempIncrement = 2; // Initial increment value for lower bits
+
+    // Calculate the difference between the input temperature and the base temperature
+    int tempDifference = temperature - baseTemp;
+
+    // Initialize Byte 1 and Byte 3
+    GreeTemplate[1] = 0x0; // Initialize to 0
+
+    GreeTemplate[3] = 0x5C; // Set to 0x5C for odd temperatures
+
+    if(tempDifference % 2 == 0 && (temperature < 69 || temperature >= 79)) {
+      GreeTemplate[3] = 0x58; 
+    } else if(tempDifference % 2 != 0 && (temperature >= 69 && temperature < 79)) {
+      GreeTemplate[3] = 0x58; 
+    } 
+
+    if (temperature >= 69) {
+      tempDifference += 1;
+    } 
+
+    if (temperature >= 79) {
+      tempDifference += 1;
+    }
+
+    // Increment Byte 1 based on temperature difference
+    while (tempDifference >= tempIncrement && tempDifference > 1) {
+        tempDifference -= tempIncrement;
+        GreeTemplate[1] += 0x1; 
+        
+        if (GreeTemplate[3] == 0xA) {
+            tempDifference -= 1;
+        }
+    }
+  } else {
+    if (temperature > 15 && temperature < 31)
+    {
+      temperature = temperature - 16;
+    } else {
+      temperature = 21;
+    }
+
+    if(greeModel == GREE_YAP) {
+      // Indicates C for YAP
+      GreeTemplate[3] = 0x50;
+    }
+
+    GreeTemplate[1] = temperature;
+  }
 
   // Gree YAN-specific
   if (greeModel == GREE_YAN)
@@ -247,11 +310,15 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
   {
     GreeTemplate[4] |= (swingH << 4); // GREE_YT will ignore packets where this is set
   }
-  if (greeModel == GREE_YAC || greeModel == GREE_YT)
+  if (greeModel == GREE_YAC || greeModel == GREE_YT || GREE_YAP)
   {
     if (iFeelMode)
     {
-      GreeTemplate[5] |= GREE_IFEEL_BIT;
+      if(greeModel == GREE_YAP) {
+        GreeTemplate[5] |= GREE_YAP_IFEEL_BIT;
+      } else {
+        GreeTemplate[5] |= GREE_IFEEL_BIT;
+      }
     }
   }
   if (greeModel == GREE_YT) {
@@ -286,6 +353,25 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
     {
       GreeTemplate[5] = swingV;
     }
+  }
+
+  if(greeModel == GREE_YAP) {
+    GreeTemplate[2] = 0x20;
+    GreeTemplate[5] = 0xC0;
+    GreeTemplate[11] = 0xA0;
+    GreeTemplate[15] = 0xA0;
+
+    if (turboMode)
+    {
+      GreeTemplate[2] |= GREE_TURBO_BIT;
+    }
+
+    if (swingV == GREE_VDIR_SWING || swingH == GREE_HDIR_SWING)
+    {
+      GreeTemplate[0] |= GREE_VSWING; // Enable swing by setting bit 6
+    }
+
+    GreeTemplate[4] = (swingH << 4) | swingV;
   }
 
   // Calculate the checksum
@@ -333,7 +419,7 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
   IR.space(GREE_AIRCON1_MSG_SPACE);
 
   // Payload part #2
-  for (i=4; i<8; i++) {
+  for (i=4; i<=15; i++) {
     IR.sendIRbyte(GreeTemplate[i], GREE_AIRCON1_BIT_MARK, GREE_AIRCON1_ZERO_SPACE, GREE_AIRCON1_ONE_SPACE);
 	}
 

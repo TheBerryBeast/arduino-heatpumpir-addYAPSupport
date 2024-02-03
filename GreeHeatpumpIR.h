@@ -61,7 +61,8 @@
 #define GREE_HDIR_RIGHT  0x06
 
 #define GREE_IFEEL_BIT 0x08
-
+#define GREE_YAP_IFEEL_BIT 0x04
+ 
 // Only available on YAA, YAC, and YT
 // byte 0
 #define GREE_VSWING     (1 << 6)
@@ -79,6 +80,7 @@
 #define GREE_YAA     2
 #define GREE_YAC     3
 #define GREE_YT      4
+#define GREE_YAP     5 
 
 
 class GreeHeatpumpIR : public HeatpumpIR
@@ -146,6 +148,12 @@ class GreeYTHeatpumpIR : public GreeiFeelHeatpumpIR
 {
   public:
     GreeYTHeatpumpIR();
+};
+
+class GreeYAPHeatpumpIR : public GreeiFeelHeatpumpIR
+{
+  public:
+    GreeYAPHeatpumpIR();
 };
 
 #endif
