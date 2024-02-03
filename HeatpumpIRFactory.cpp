@@ -29,6 +29,8 @@ HeatpumpIR* HeatpumpIRFactory::create(const char *modelName) {
     return new GreeYAAHeatpumpIR();
   } else if (strcmp_P(modelName, PSTR("greeyan")) == 0) {
     return new GreeYANHeatpumpIR();
+  } else if(strcmp_P(modelName, PSTR("greeyap")) == 0) {
+    return new GreeYAPHeatpumpIR();
   } else if (strcmp_P(modelName, PSTR("greeyac")) == 0) {
     return new GreeYACHeatpumpIR();
   } else if (strcmp_P(modelName, PSTR("greeyt")) == 0) {
