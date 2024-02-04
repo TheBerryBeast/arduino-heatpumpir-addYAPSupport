@@ -238,7 +238,7 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
 
   uint8_t i;
 
-  if (greeModel != GREE_YT) {
+  if (greeModel != GREE_YT && greeModel != GREE_YAP) {
     GreeTemplate[5] = 0x20;
   }
 
@@ -278,12 +278,6 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
     while (tempDifference >= tempIncrement && tempDifference > 1) {
         tempDifference -= tempIncrement;
         GreeTemplate[1] += 0x1; 
-
-       /*
-        if (GreeTemplate[3] == 0xA) {
-            tempDifference -= 1;
-        }
-*/ 
     }
   } else {
     if (temperature > 15 && temperature < 31)
@@ -312,7 +306,7 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
   {
     GreeTemplate[4] |= (swingH << 4); // GREE_YT will ignore packets where this is set
   }
-  if (greeModel == GREE_YAC || greeModel == GREE_YT || GREE_YAP)
+  if (greeModel == GREE_YAC || greeModel == GREE_YT || greeModel == GREE_YAP)
   {
     if (iFeelMode)
     {
@@ -359,7 +353,7 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
 
   if(greeModel == GREE_YAP) {
     GreeTemplate[2] = 0x20;
-    GreeTemplate[5] = 0xC0;
+    GreeTemplate[5] |= 0xC0;
     GreeTemplate[11] = 0xA0;
     GreeTemplate[15] = 0xA0;
 
@@ -453,10 +447,40 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
     IR.sendIRbyte(GreeTemplate[i], GREE_AIRCON1_BIT_MARK, GREE_AIRCON1_ZERO_SPACE, GREE_AIRCON1_ONE_SPACE);
 	}
 
-  // End mark
-  IR.mark(GREE_AIRCON1_BIT_MARK);
-  IR.space(0);
-}
+  if(iFeelMode) {
+    if(temperature >= 61 && temperature <= 86) {
+      // If in F convert to C for IFeel Temperature
+      temperature = (5.0 / 9.0) * (temperature - 32);
+    }
+
+    uint8_t GreeTemplate[] = { 0x00, 0x00 };
+
+    GreeTemplate[0] = 25;
+    GreeTemplate[1] = 0xA5;
+
+    IR.mark(GREE_AIRCON1_BIT_MARK);
+    IR.space(0);
+
+    IR.space(GREE_AIRCON1_HDR_SPACE);
+    IR.mark(GREE_AIRCON1_HDR_MARK);
+    IR.space(GREE_AIRCON1_HDR_SPACE);
+
+    IR.mark(GREE_AIRCON1_BIT_MARK);
+    IR.space(0);
+
+    // send payload
+    IR.sendIRbyte(GreeTemplate[0], GREE_AIRCON1_BIT_MARK, GREE_AIRCON1_ZERO_SPACE, GREE_AIRCON1_ONE_SPACE);
+    IR.sendIRbyte(GreeTemplate[1], GREE_AIRCON1_BIT_MARK, GREE_AIRCON1_ZERO_SPACE, GREE_AIRCON1_ONE_SPACE);
+
+    IR.mark(GREE_AIRCON1_BIT_MARK);
+    IR.space(0);
+  } else {
+    // End mark
+    IR.mark(GREE_AIRCON1_BIT_MARK);
+    IR.space(0);
+  }
+
+  }
 
 // Sends current sensed temperatures, YAC remotes/supporting units only
 void GreeiFeelHeatpumpIR::send(IRSender& IR, uint8_t currentTemperature)
