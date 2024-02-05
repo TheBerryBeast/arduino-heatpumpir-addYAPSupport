@@ -4,7 +4,7 @@
 #ifndef GreeHeatpumpIR_h
 #define GreeHeatpumpIR_h
 
-#include <HeatpumpIR.h
+#include <HeatpumpIR.h>
 
 // Gree timing constants
 #define GREE_AIRCON1_HDR_MARK   9000
