@@ -447,7 +447,7 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
     IR.sendIRbyte(GreeTemplate[i], GREE_AIRCON1_BIT_MARK, GREE_AIRCON1_ZERO_SPACE, GREE_AIRCON1_ONE_SPACE);
 	}
 
-  if(!iFeelMode) {
+  if(iFeelMode) {
     if(temperature >= 61 && temperature <= 86) {
       // If in F convert to C for IFeel Temperature
       temperature = (5.0 / 9.0) * (temperature - 32);
