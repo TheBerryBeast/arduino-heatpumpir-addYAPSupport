@@ -421,7 +421,7 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
 
   // Message space
   IR.mark(GREE_AIRCON1_BIT_MARK);
-  IR.space(GREE_AIRCON1_MSG_SPACE);
+  IR.space(GREE_YAP_MSG_SPACE);
 
   // Send Header mark
   IR.mark(GREE_AIRCON1_HDR_MARK);
@@ -455,17 +455,16 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
 
     uint8_t GreeTemplate[] = { 0x00, 0x00 };
 
-    GreeTemplate[0] = 25;
+    GreeTemplate[0] = temperature;
     GreeTemplate[1] = 0xA5;
 
     IR.mark(GREE_AIRCON1_BIT_MARK);
     IR.space(0);
 
-    IR.space(GREE_AIRCON1_HDR_SPACE);
-    IR.mark(GREE_AIRCON1_HDR_MARK);
-    IR.space(GREE_AIRCON1_HDR_SPACE);
+    IR.space(GREE_YAP_IFEEL_MSG_SPACE);
+    IR.mark(GREE_YAC_HDR_MARK);
+    IR.space(GREE_YAC_HDR_SPACE);
 
-    IR.mark(GREE_AIRCON1_BIT_MARK);
     IR.space(0);
 
     // send payload
