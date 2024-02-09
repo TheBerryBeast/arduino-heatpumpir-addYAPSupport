@@ -6,19 +6,20 @@
 
 #include <HeatpumpIR.h>
 
-// Gree timing constants
 #define GREE_AIRCON1_HDR_MARK   9000
-#define GREE_AIRCON1_HDR_SPACE  4400
-#define GREE_AIRCON1_BIT_MARK   640
+#define GREE_AIRCON1_HDR_SPACE  4000
+#define GREE_AIRCON1_BIT_MARK   680
 #define GREE_AIRCON1_ONE_SPACE  1600
-#define GREE_AIRCON1_ZERO_SPACE 520
-//#define GREE_AIRCON1_MSG_SPACE  19000
-#define GREE_AIRCON1_MSG_SPACE  26600
+#define GREE_AIRCON1_ZERO_SPACE 500
+#define GREE_AIRCON1_MSG_SPACE  19000
 
 // Timing specific for YAC features (I-Feel mode)
 #define GREE_YAC_HDR_MARK   6000
 #define GREE_YAC_HDR_SPACE  3000
 #define GREE_YAC_BIT_MARK   650
+
+#define GREE_YAP_MSG_SPACE   40000
+#define GREE_YAP_IFEEL_MSG_SPACE   200000
 
 // Power state
 #define GREE_AIRCON1_POWER_OFF  0x00
