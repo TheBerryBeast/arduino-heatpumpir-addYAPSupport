@@ -308,7 +308,7 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
   }
   if (greeModel == GREE_YAC || greeModel == GREE_YT || greeModel == GREE_YAP)
   {
-    if (iFeelMode)
+    if (!iFeelMode)
     {
       if(greeModel == GREE_YAP) {
         GreeTemplate[5] |= GREE_YAP_IFEEL_BIT;
@@ -455,15 +455,15 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
 
     uint8_t GreeTemplate[] = { 0x00, 0x00 };
 
-    GreeTemplate[0] = 24;
+    GreeTemplate[0] = temperature;
     GreeTemplate[1] = 0xA5;
 
-    //IR.mark(GREE_AIRCON1_BIT_MARK);
+    IR.mark(GREE_AIRCON1_BIT_MARK);
     //IR.space(0);
 
-   // IR.space(GREE_YAP_IFEEL_MSG_SPACE);
-    //IR.mark(GREE_YAC_HDR_MARK);
-   // IR.space(GREE_YAC_HDR_SPACE);
+    IR.space(GREE_YAP_IFEEL_MSG_SPACE);
+    IR.mark(GREE_YAC_HDR_MARK);
+    IR.space(GREE_YAC_HDR_SPACE);
 
     //IR.space(0);
 
