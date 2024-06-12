@@ -441,7 +441,7 @@ void GreeHeatpumpIR::sendGree(IRSender& IR, uint8_t powerMode, uint8_t operating
 
   // Message space
   IR.mark(GREE_AIRCON1_BIT_MARK);
-  IR.space(GREE_AIRCON1_MSG_SPACE);
+  IR.space(GREE_AIRCON1_FINAL_MSG_SPACE);
 
   for (i=12; i<=15; i++) {
     IR.sendIRbyte(GreeTemplate[i], GREE_AIRCON1_BIT_MARK, GREE_AIRCON1_ZERO_SPACE, GREE_AIRCON1_ONE_SPACE);
